@@ -1,127 +1,503 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LiquidityForge • BTC/USD SMC Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://s3.tradingview.com/tv.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .neon-blue { text-shadow: 0 0 10px #22d3ee; }
-    .chart-container { height: 420px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Institutional SMC Dashboard | BTC/USD Liquidity Sweep & Structure</title>
+    <!-- TradingView Widget Library -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050b14;
+            color: #eef5ff;
+            padding: 20px;
+        }
+
+        /* modern dark dashboard */
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+        .logo h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .logo p {
+            font-size: 0.75rem;
+            color: #7e8a9e;
+        }
+        .mode-toggle {
+            background: #0f172f;
+            border-radius: 40px;
+            padding: 4px;
+            display: flex;
+            gap: 8px;
+            border: 1px solid #1e2a4a;
+        }
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 32px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #a0b3d9;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+        .mode-btn.active {
+            background: #1e3a8a;
+            color: white;
+            box-shadow: 0 0 8px rgba(59,130,246,0.4);
+        }
+        .badge {
+            background: #0f212e;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #6c8eff;
+        }
+
+        /* grid layout */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+        @media (max-width: 1000px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* chart card */
+        .chart-card {
+            background: #0b1120;
+            border-radius: 28px;
+            border: 1px solid #1e2a4a;
+            overflow: hidden;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.6);
+            backdrop-filter: blur(2px);
+        }
+        .chart-header {
+            padding: 16px 20px;
+            background: #070e1a;
+            border-bottom: 1px solid #1e2a4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .timeframe-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .tf-btn {
+            background: #11192b;
+            border: none;
+            color: #bbd1ff;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+        .tf-btn.active-tf {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 0 6px #3b82f6;
+        }
+
+        /* right panel */
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .card {
+            background: #0b1120;
+            border-radius: 24px;
+            border: 1px solid #1e2a4a;
+            padding: 20px;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .signal-badge {
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 12px;
+            border-radius: 20px;
+            background: #071126;
+        }
+        .signal-buy {
+            color: #22c55e;
+            text-shadow: 0 0 4px #22c55e80;
+        }
+        .signal-sell {
+            color: #ef4444;
+        }
+        .signal-wait {
+            color: #f59e0b;
+        }
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        .check-icon {
+            width: 24px;
+            text-align: center;
+        }
+        .green {
+            color: #22c55e;
+        }
+        .red {
+            color: #ef4444;
+        }
+        .neutral {
+            color: #6c86a3;
+        }
+        .liquidity-zone {
+            background: #0f172f;
+            border-radius: 14px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            font-family: monospace;
+        }
+        .risk-slider {
+            margin: 10px 0;
+        }
+        hr {
+            border-color: #1e2a4a;
+            margin: 16px 0;
+        }
+        .engine-text {
+            background: #030712;
+            padding: 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+        button {
+            background: #1e2a4a;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 30px;
+            color: #4b5b7a;
+        }
+        i {
+            margin-right: 6px;
+        }
+    </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200 min-h-screen">
-
-<div class="max-w-7xl mx-auto p-4 md:p-6">
-
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-zinc-800 pb-6">
-    <div>
-      <h1 class="text-4xl font-bold tracking-tight neon-blue">LIQUIDITYFORGE</h1>
-      <p class="text-emerald-400 text-sm flex items-center gap-2">
-        <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-        BTC/USD • 5m / 15m • SMC 2026
-      </p>
-    </div>
-    <div class="text-right">
-      <div class="text-3xl font-mono font-semibold" id="btc-price">$76,050</div>
-      <div class="text-xs text-zinc-500" id="price-change">-0.18% • 24h</div>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-    <!-- Charts Section -->
-    <div class="lg:col-span-8 space-y-6">
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <span class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-medium rounded">15-MIN BIAS ENGINE</span>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <div class="logo">
+            <h1><i class="fas fa-chart-line"></i> LIQUIDITY EDGE | SMC</h1>
+            <p>institutional-grade · BTC/USD · liquidity sweep + market structure</p>
         </div>
-        <div class="chart-container bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800" id="tv-15min"></div>
-      </div>
-
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded">5-MIN EXECUTION ENGINE</span>
+        <div style="display: flex; gap: 16px;">
+            <div class="badge"><i class="fas fa-microchip"></i> 2026 execution core</div>
+            <div class="mode-toggle" id="modeToggle">
+                <button class="mode-btn active" data-mode="beginner">📘 Beginner</button>
+                <button class="mode-btn" data-mode="advanced">⚡ Advanced</button>
+            </div>
         </div>
-        <div class="chart-container bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800" id="tv-5min"></div>
-      </div>
     </div>
 
-    <!-- Right Sidebar -->
-    <div class="lg:col-span-4 space-y-6">
-      <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <div class="uppercase text-xs tracking-widest text-zinc-500">CURRENT SIGNAL</div>
-            <div id="main-signal" class="text-4xl font-bold text-emerald-400">WAIT</div>
-          </div>
-          <div id="signal-badge" class="px-5 py-2 rounded-2xl text-sm font-semibold bg-amber-500/10 text-amber-400">NO SETUP</div>
+    <div class="grid-2col">
+        <!-- LEFT: Chart + embedded TradingView -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <span><i class="fas fa-chart-simple"></i> BTC/USD · Real-time | <span id="currentBiasSpan">⚖️ Bias: NEUTRAL</span></span>
+                <div class="timeframe-buttons" id="timeframeSelector">
+                    <button class="tf-btn" data-tf="5">5m</button>
+                    <button class="tf-btn active-tf" data-tf="15">15m</button>
+                </div>
+            </div>
+            <div id="tvChart" style="height: 520px; width: 100%; background: #000000;"></div>
         </div>
-      </div>
 
-      <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
-        <h3 class="font-semibold mb-4">SIGNAL REASONS</h3>
-        <div id="signal-reasons" class="space-y-3 text-sm"></div>
-      </div>
+        <!-- RIGHT PANEL: Strategy Dashboard -->
+        <div class="info-panel">
+            <!-- SIGNAL ENGINE CARD -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-brain"></i> Signal Engine · SMC Model</div>
+                <div class="signal-badge" id="signalMain">
+                    <span id="signalText">WAIT</span>
+                </div>
+                <div class="engine-text" id="reasonEngine">
+                    🧠 Analyzing market structure & liquidity...
+                </div>
+            </div>
 
-      <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6">
-        <h3 class="font-semibold mb-4">ENTRY CHECKLIST</h3>
-        <div id="checklist" class="space-y-3"></div>
-      </div>
+            <!-- TREND + LIQUIDITY ZONES CARD -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-flag-checkered"></i> Trend & Liquidity Zones</div>
+                <div id="trendInfo"><strong>Macro Trend (15m EMA200):</strong> <span id="emaTrend">Loading...</span></div>
+                <div id="structureInfo"><strong>Structure (5m):</strong> <span id="marketStructure">—</span></div>
+                <div id="liquidityZoneDisplay" class="liquidity-zone">
+                    🔍 Liquidity Sweep Zones: <span id="liquidityText">None detected yet</span>
+                </div>
+                <div><strong>Volatility (ATR):</strong> <span id="atrStatus">—</span></div>
+                <div><strong>RSI (14):</strong> <span id="rsiValue">—</span> | <span id="rsiFilter">—</span></div>
+            </div>
+
+            <!-- ENTRY CHECKLIST UI (dynamic) -->
+            <div class="card">
+                <div class="card-title"><i class="fas fa-clipboard-list"></i> Entry Checklist</div>
+                <div id="checklistContainer" class="checklist">
+                    <!-- dynamic check items -->
+                </div>
+                <hr>
+                <div><i class="fas fa-chart-line"></i> Risk: <span id="riskRewardSpan">1:2.0 min</span> | Position size: <span id="riskPercent">1.5%</span></div>
+                <input type="range" min="0.5" max="2.5" step="0.1" value="1.5" id="riskSlider" class="risk-slider" style="width:100%; margin-top:8px;">
+            </div>
+
+            <!-- SIMULATED TRADE ADVISORY -->
+            <div class="card beginner-advanced">
+                <div class="card-title"><i class="fas fa-shield-alt"></i> Risk Management Rules</div>
+                <ul style="font-size:0.75rem; margin-left:18px; line-height:1.5;">
+                    <li>🔻 Stop Loss: below/above liquidity sweep zone</li>
+                    <li>🎯 Take Profit: next structure level (min 1:2 RR)</li>
+                    <li>🚫 No trades in sideways / low ATR</li>
+                    <li>📉 Max risk per trade: 1–2%</li>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
+    <div class="footer-note">
+        <i class="fas fa-chart-simple"></i> Institutional Logic: Liquidity Sweep → Market Structure Shift → Retest Confirmation. Data simulated based on real-time price streaming.
+    </div>
 </div>
 
 <script>
-function initCharts() {
-  new TradingView.widget({
-    "width": "100%", "height": "100%", "symbol": "BITSTAMP:BTCUSD", "interval": "15",
-    "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en",
-    "toolbar_bg": "#18181b", "enable_publishing": false, "container_id": "tv-15min"
-  });
-
-  new TradingView.widget({
-    "width": "100%", "height": "100%", "symbol": "BITSTAMP:BTCUSD", "interval": "5",
-    "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en",
-    "toolbar_bg": "#18181b", "enable_publishing": false, "container_id": "tv-5min"
-  });
-}
-
-function updateStrategy() {
-  document.getElementById('main-signal').textContent = "WAIT";
-  document.getElementById('signal-badge').className = "px-5 py-2 rounded-2xl text-sm font-semibold bg-amber-500/10 text-amber-400";
-  
-  document.getElementById('signal-reasons').innerHTML = `
-    <div class="p-3 bg-zinc-800 rounded-2xl flex items-center gap-2">
-      <span class="text-emerald-400">✔</span> EMA 200 Bullish Bias Active
-    </div>
-    <div class="p-3 bg-zinc-800 rounded-2xl flex items-center gap-2">
-      <span class="text-amber-400">⏳</span> Waiting for Liquidity Sweep + Retest
-    </div>
-  `;
-
-  document.getElementById('checklist').innerHTML = `
-    <div class="flex justify-between p-3 bg-zinc-800 rounded-2xl"><span>Trend Filter (15m)</span><span class="text-emerald-400">✔</span></div>
-    <div class="flex justify-between p-3 bg-zinc-800 rounded-2xl"><span>Liquidity Sweep</span><span class="text-amber-400">Waiting</span></div>
-    <div class="flex justify-between p-3 bg-zinc-800 rounded-2xl"><span>Retest Confirmation</span><span class="text-amber-400">Waiting</span></div>
-    <div class="flex justify-between p-3 bg-zinc-800 rounded-2xl"><span>RSI Momentum</span><span class="text-emerald-400">OK</span></div>
-  `;
-}
-
-window.onload = () => {
-  initCharts();
-  updateStrategy();
-  
-  let price = 76050;
-  setInterval(() => {
-    price += Math.random() * 80 - 40;
-    document.getElementById('btc-price').textContent = '$' + Math.round(price).toLocaleString();
-  }, 8000);
-};
-</script>
-
-</body>
-</html>
+    // ------------------------- GLOBALS -------------------------
+    let tvWidget = null;
+    let currentTimeframe = '15';   // '5' or '15'
+    let currentMode = 'beginner';   // beginner / advanced
+    // store last 50 5m candles for structure & liquidity simulation (we'll derive from TradingView data via callbacks? We'll use a data simulator that pulls from TV's last bars)
+    // Since TV widget doesn't give raw OHLC directly to JS easily, we'll implement a lightweight "price action simulator" using setInterval to fetch latest price and generate synthetic structure based on real-time price movement.
+    // For robustness: we use a combination of real-time price feed (simulated via websocket but using TV's last price by capturing via chart? easier: use mock price updates based on last known price + random walk but real market will reflect actual BTC price via widget.
+    // Better approach: Use Binance or CoinGecko public API to fetch OHLCV for BTCUSDT every 30s, compute indicators, structure, liquidity sweeps. That will make it "real market".
+    // I'll implement a reliable real-data feed: fetch from Binance public API (cors enabled) for BTCUSDT 5m and 15m candles, update every 30 seconds.
+    
+    let ohlcvData5m = [];   // store recent 200 5m candles
+    let ohlcvData15m = [];
+    let lastUpdate = 0;
+    let lastSweepZone = null;
+    let currentSignal = { action: "WAIT", reason: "", checks: {} };
+    
+    // Binance API endpoints
+    async function fetchCandles(symbol, interval, limit=120) {
+        const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.map(k => ({
+                time: k[0] / 1000,
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+                volume: parseFloat(k[5])
+            }));
+        } catch(e) { console.warn(e); return null; }
+    }
+    
+    // technical indicators
+    function calcEMA(prices, period) {
+        const k = 2 / (period + 1);
+        let ema = prices[0];
+        for(let i=1; i<prices.length; i++) ema = prices[i] * k + ema * (1 - k);
+        return ema;
+    }
+    
+    function calcRSI(closes, period=14) {
+        if(closes.length < period+1) return 50;
+        let gains=0, losses=0;
+        for(let i=closes.length-period; i<closes.length; i++) {
+            let diff = closes[i] - closes[i-1];
+            if(diff>=0) gains+=diff; else losses-=diff;
+        }
+        let avgGain = gains/period, avgLoss = losses/period;
+        if(avgLoss === 0) return 100;
+        let rs = avgGain/avgLoss;
+        return 100 - (100/(1+rs));
+    }
+    
+    function calcATR(highs, lows, closes, period=14) {
+        if(highs.length < period+1) return 0;
+        let trs = [];
+        for(let i=1; i<highs.length; i++) {
+            let hl = highs[i] - lows[i];
+            let hc = Math.abs(highs[i] - closes[i-1]);
+            let lc = Math.abs(lows[i] - closes[i-1]);
+            trs.push(Math.max(hl, hc, lc));
+        }
+        let atr = trs.slice(-period).reduce((a,b)=>a+b,0)/period;
+        return atr;
+    }
+    
+    // detect swing highs/lows for structure (5m)
+    function detectStructure(candles) {
+        if(candles.length < 20) return "Neutral";
+        let highs = candles.map(c=>c.high);
+        let lows = candles.map(c=>c.low);
+        let recentHighs = highs.slice(-15);
+        let recentLows = lows.slice(-15);
+        let swingHigh = Math.max(...recentHighs.slice(0,-2));
+        let swingLow = Math.min(...recentLows.slice(0,-2));
+        let lastClose = candles[candles.length-1].close;
+        let prevClose = candles[candles.length-2].close;
+        if(lastClose > swingHigh && prevClose <= swingHigh) return "Bullish (HH/HL)";
+        if(lastClose < swingLow && prevClose >= swingLow) return "Bearish (LH/LL)";
+        if(lastClose > swingLow && lastClose < swingHigh) return "Range / Neutral";
+        return "Neutral";
+    }
+    
+    // liquidity sweep detection: price breaks previous swing high/low then retraces quickly
+    function detectLiquiditySweep(candles5m, currentPrice) {
+        if(candles5m.length < 30) return null;
+        let last10high = Math.max(...candles5m.slice(-20).map(c=>c.high));
+        let last10low = Math.min(...candles5m.slice(-20).map(c=>c.low));
+        let prevSwingHigh = last10high;
+        let prevSwingLow = last10low;
+        let lastCandle = candles5m[candles5m.length-1];
+        let prevCandle = candles5m[candles5m.length-2];
+        if(prevCandle && lastCandle.high > prevSwingHigh && currentPrice < lastCandle.high - (lastCandle.high-prevSwingHigh)*0.5) {
+            return { type: "HIGH LIQUIDITY SWEEP", level: prevSwingHigh, direction: "short" };
+        }
+        if(prevCandle && lastCandle.low < prevSwingLow && currentPrice > lastCandle.low + (prevSwingLow-lastCandle.low)*0.5) {
+            return { type: "LOW LIQUIDITY SWEEP", level: prevSwingLow, direction: "long" };
+        }
+        return null;
+    }
+    
+    // main strategy evaluation: based on 15m bias and 5m execution
+    let lastSignalState = {};
+    function evaluateStrategy(candles15, candles5, currentPrice) {
+        if(!candles15.length || !candles5.length) return { action: "WAIT", reason: "Initializing data...", checks: {} };
+        const closes15 = candles15.map(c=>c.close);
+        const closes5 = candles5.map(c=>c.close);
+        const highs5 = candles5.map(c=>c.high);
+        const lows5 = candles5.map(c=>c.low);
+        const ema200price = calcEMA(closes15, 200);
+        const last15Close = closes15[closes15.length-1];
+        const trendBullish = last15Close > ema200price;
+        const rsi14 = calcRSI(closes5, 14);
+        const atr = calcATR(highs5, lows5, closes5, 14);
+        const avgPrice5 = closes5.slice(-14).reduce((a,b)=>a+b,0)/14;
+        const volatilityOk = atr > (avgPrice5 * 0.002); // 0.2% min volatility expansion
+        const structure5 = detectStructure(candles5);
+        const liquiditySweep = detectLiquiditySweep(candles5, currentPrice);
+        const retestConfirmed = (liquiditySweep && Math.abs(currentPrice - (liquiditySweep.level || 0)) < atr*0.8);
+        
+        let action = "WAIT";
+        let checks = {
+            trend: false,
+            momentum: false,
+            volatility: false,
+            liquiditySweep: false,
+            retest: false
+        };
+        let reasonParts = [];
+        
+        checks.trend = trendBullish ? true : false;
+        reasonParts.push(checks.trend ? "✅ EMA200 trend confirmed (bullish)" : (trendBullish===false ? "❌ Bearish trend below EMA200" : "⚠️ Trend filter: price below EMA200 (short only)"));
+        
+        // momentum filter (long: rsi>50, short: rsi<50)
+        let momentumValid = false;
+        if(trendBullish && rsi14 > 50) { momentumValid = true; checks.momentum = true; reasonParts.push("✅ RSI > 50 → bullish momentum"); }
+        else if(!trendBullish && rsi14 < 50) { momentumValid = true; checks.momentum = true; reasonParts.push("✅ RSI < 50 → bearish momentum"); }
+        else { reasonParts.push(`⏸️ Momentum filter fail: RSI ${rsi14.toFixed(1)} not aligned with trend`); }
+        
+        checks.volatility = volatilityOk;
+        if(!volatilityOk) reasonParts.push("⚠️ Low ATR / choppy market → avoid trade");
+        else reasonParts.push("✅ Volatility expansion active");
+        
+        checks.liquiditySweep = liquiditySweep !== null;
+        if(checks.liquiditySweep) reasonParts.push(`🔍 Liquidity sweep detected (${liquiditySweep.type})`);
+        else reasonParts.push("⏳ No recent liquidity sweep");
+        
+        checks.retest = retestConfirmed && checks.liquiditySweep;
+        if(checks.retest) reasonParts.push("✅ Retest of broken structure level confirmed");
+        
+        // decision
+        let finalAction = "WAIT";
+        if(checks.trend && checks.momentum && checks.volatility && checks.liquiditySweep && checks.retest) {
+            finalAction = trendBullish ? "BUY" : "SELL";
+        } else if(checks.trend && checks.liquiditySweep && checks.volatility && !checks.retest) {
+            finalAction = "WAIT (retest missing)";
+        } else {
+            finalAction = "WAIT";
+        }
+        
+        let actionClean = (finalAction === "BUY" || finalAction === "SELL") ? finalAction : "WAIT";
+        let reasonText = reasonParts.join(" · ");
+        return { action: actionClean, reason: reasonText, checks, liquiditySweep, rsi: rsi14, atr, structure: structure5, trendBullish };
+    }
+    
+    // UI update
+    let lastPrice = 45000;
+    async function updateAll() {
+        const data5 = await fetchCandles('BTCUSDT', '5m', 120);
+        const data15 = await fetchCandles('BTCUSDT', '15m', 200);
+        if(data5 && data15) {
+            ohlcvData5m = data5;
+            ohlcvData15m = data15;
+            lastPrice = data5[data5.length-1].close;
+            const strategy = evaluateStrategy(ohlcvData15m, ohlcvData5m, lastPrice);
+            currentSignal = strategy;
+            // update UI
+            document.getElementById("signalText").innerHTML = strategy.action;
+            const s
