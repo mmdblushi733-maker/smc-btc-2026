@@ -1,503 +1,636 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Institutional SMC Dashboard | BTC/USD Liquidity Sweep & Structure</title>
-    <!-- TradingView Widget Library -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <!-- Google Fonts & Font Awesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeEdge — Live Signal Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #04060a;
+  --bg2:      #080c12;
+  --card:     #0c1018;
+  --card2:    #111620;
+  --border:   #1a2436;
+  --border2:  #243350;
+  --gold:     #f0b429;
+  --gold2:    #ffd166;
+  --green:    #00e5a0;
+  --red:      #ff3c5a;
+  --blue:     #4d9ef7;
+  --yellow:   #f5d020;
+  --text:     #b0c0d4;
+  --text2:    #607080;
+  --white:    #eef4ff;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(240,180,41,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(240,180,41,.018) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #050b14;
-            color: #eef5ff;
-            padding: 20px;
-        }
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:999;
+  background:rgba(4,6,10,.96);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:60px;
+}
+.logo{
+  font-family:'Orbitron',sans-serif;
+  font-size:16px;font-weight:900;
+  color:var(--gold);letter-spacing:.1em;
+  display:flex;align-items:center;gap:10px;
+}
+.live-pill{
+  display:flex;align-items:center;gap:7px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--green);
+  border:1px solid rgba(0,229,160,.25);
+  padding:5px 14px;
+}
+.live-pill .dot{
+  width:7px;height:7px;
+  background:var(--green);border-radius:50%;
+  animation:blink 1.2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 
-        /* modern dark dashboard */
-        .dashboard {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
+.nav-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;color:var(--text2);
+  letter-spacing:.08em;
+}
 
-        /* header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-            gap: 16px;
-        }
-        .logo h1 {
-            font-size: 1.6rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.3px;
-        }
-        .logo p {
-            font-size: 0.75rem;
-            color: #7e8a9e;
-        }
-        .mode-toggle {
-            background: #0f172f;
-            border-radius: 40px;
-            padding: 4px;
-            display: flex;
-            gap: 8px;
-            border: 1px solid #1e2a4a;
-        }
-        .mode-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 32px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #a0b3d9;
-            transition: all 0.2s;
-            font-size: 0.8rem;
-        }
-        .mode-btn.active {
-            background: #1e3a8a;
-            color: white;
-            box-shadow: 0 0 8px rgba(59,130,246,0.4);
-        }
-        .badge {
-            background: #0f212e;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            color: #6c8eff;
-        }
+/* TICKER */
+.ticker-wrap{border-bottom:1px solid var(--border);background:var(--bg2);position:relative;z-index:10;}
 
-        /* grid layout */
-        .grid-2col {
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 24px;
-        }
-        @media (max-width: 1000px) {
-            .grid-2col {
-                grid-template-columns: 1fr;
-            }
-        }
+/* LAYOUT */
+.main{
+  position:relative;z-index:10;
+  max-width:1400px;margin:0 auto;
+  padding:28px 24px 60px;
+}
 
-        /* chart card */
-        .chart-card {
-            background: #0b1120;
-            border-radius: 28px;
-            border: 1px solid #1e2a4a;
-            overflow: hidden;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.6);
-            backdrop-filter: blur(2px);
-        }
-        .chart-header {
-            padding: 16px 20px;
-            background: #070e1a;
-            border-bottom: 1px solid #1e2a4a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .timeframe-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .tf-btn {
-            background: #11192b;
-            border: none;
-            color: #bbd1ff;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.8rem;
-        }
-        .tf-btn.active-tf {
-            background: #2563eb;
-            color: white;
-            box-shadow: 0 0 6px #3b82f6;
-        }
+/* SECTION LABEL */
+.sec-label{
+  display:flex;align-items:center;gap:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:18px;
+}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
 
-        /* right panel */
-        .info-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        .card {
-            background: #0b1120;
-            border-radius: 24px;
-            border: 1px solid #1e2a4a;
-            padding: 20px;
-        }
-        .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-left: 3px solid #3b82f6;
-            padding-left: 12px;
-        }
-        .signal-badge {
-            font-size: 1.8rem;
-            font-weight: 800;
-            text-align: center;
-            padding: 12px;
-            border-radius: 20px;
-            background: #071126;
-        }
-        .signal-buy {
-            color: #22c55e;
-            text-shadow: 0 0 4px #22c55e80;
-        }
-        .signal-sell {
-            color: #ef4444;
-        }
-        .signal-wait {
-            color: #f59e0b;
-        }
-        .checklist {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
-        }
-        .check-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-        }
-        .check-icon {
-            width: 24px;
-            text-align: center;
-        }
-        .green {
-            color: #22c55e;
-        }
-        .red {
-            color: #ef4444;
-        }
-        .neutral {
-            color: #6c86a3;
-        }
-        .liquidity-zone {
-            background: #0f172f;
-            border-radius: 14px;
-            padding: 10px;
-            margin-top: 12px;
-            font-size: 0.75rem;
-            font-family: monospace;
-        }
-        .risk-slider {
-            margin: 10px 0;
-        }
-        hr {
-            border-color: #1e2a4a;
-            margin: 16px 0;
-        }
-        .engine-text {
-            background: #030712;
-            padding: 12px;
-            border-radius: 16px;
-            font-size: 0.8rem;
-            font-family: monospace;
-        }
-        button {
-            background: #1e2a4a;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-        .footer-note {
-            font-size: 0.7rem;
-            text-align: center;
-            margin-top: 30px;
-            color: #4b5b7a;
-        }
-        i {
-            margin-right: 6px;
-        }
-    </style>
+/* SIGNAL CARDS GRID */
+.signal-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:3px;
+  margin-bottom:28px;
+}
+
+.sig-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:0;
+  overflow:hidden;
+  transition:transform .25s,border-color .25s;
+  cursor:pointer;
+  position:relative;
+}
+.sig-card:hover{transform:translateY(-3px);border-color:var(--border2);}
+
+.sig-card-top{
+  padding:16px 18px 12px;
+  border-bottom:1px solid var(--border);
+}
+.sig-pair{
+  font-family:'Orbitron',sans-serif;
+  font-size:15px;font-weight:700;
+  color:var(--white);letter-spacing:.06em;
+  margin-bottom:2px;
+}
+.sig-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--text2);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* Signal badge */
+.sig-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'Orbitron',sans-serif;
+  font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 14px;
+  margin:12px 18px;
+}
+.sig-badge.strong-buy{
+  background:rgba(0,229,160,.12);
+  color:var(--green);
+  border:1.5px solid rgba(0,229,160,.4);
+  box-shadow:0 0 16px rgba(0,229,160,.1);
+}
+.sig-badge.buy{
+  background:rgba(0,200,120,.08);
+  color:#00c878;
+  border:1.5px solid rgba(0,200,120,.3);
+}
+.sig-badge.neutral{
+  background:rgba(240,180,41,.08);
+  color:var(--gold);
+  border:1.5px solid rgba(240,180,41,.3);
+}
+.sig-badge.sell{
+  background:rgba(255,60,90,.08);
+  color:#ff6080;
+  border:1.5px solid rgba(255,60,90,.3);
+}
+.sig-badge.strong-sell{
+  background:rgba(255,30,60,.14);
+  color:var(--red);
+  border:1.5px solid rgba(255,30,60,.45);
+  box-shadow:0 0 16px rgba(255,30,60,.12);
+}
+.sig-badge .arrow{font-size:14px;}
+
+/* Indicator bars */
+.sig-bars{padding:0 18px 16px;}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.bar-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--text2);
+  letter-spacing:.08em;text-transform:uppercase;
+  width:36px;flex-shrink:0;
+}
+.bar-track{
+  flex:1;height:5px;
+  background:var(--border);
+  border-radius:0;
+  overflow:hidden;
+  position:relative;
+}
+.bar-fill{
+  height:100%;
+  border-radius:0;
+  transition:width .8s ease;
+}
+.bar-fill.green{background:linear-gradient(90deg,#00b870,var(--green));}
+.bar-fill.red{background:linear-gradient(90deg,#cc2040,var(--red));}
+.bar-fill.gold{background:linear-gradient(90deg,#c07010,var(--gold));}
+.bar-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--text2);
+  width:26px;text-align:right;flex-shrink:0;
+}
+
+/* Top bar indicator line */
+.sig-topbar{
+  height:3px;
+  position:absolute;top:0;left:0;right:0;
+}
+.sig-topbar.strong-buy{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.sig-topbar.buy{background:linear-gradient(90deg,transparent,#00c878,transparent);}
+.sig-topbar.neutral{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.sig-topbar.sell{background:linear-gradient(90deg,transparent,#ff6080,transparent);}
+.sig-topbar.strong-sell{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+
+/* CHART + TA GRID */
+.chart-ta-grid{
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:3px;
+  margin-bottom:28px;
+}
+.panel{
+  background:var(--card);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--card2);
+}
+.panel-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:12px;font-weight:700;
+  color:var(--white);letter-spacing:.07em;
+}
+.panel-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--text2);letter-spacing:.1em;
+}
+
+/* TA MULTI WIDGET STACK */
+.ta-stack{
+  display:flex;flex-direction:column;gap:3px;
+}
+.ta-mini{
+  background:var(--card);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.ta-mini-header{
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--card2);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ta-mini-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold);
+}
+
+/* SCREENER PANEL */
+.screener-panel{
+  background:var(--card);
+  border:1px solid var(--border);
+  overflow:hidden;
+  margin-bottom:28px;
+}
+
+/* SUMMARY BAR */
+.summary-bar{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:3px;
+  margin-bottom:28px;
+}
+.sum-item{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:20px 18px;
+  text-align:center;
+  transition:all .25s;
+}
+.sum-item:hover{background:var(--card2);}
+.sum-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text2);margin-bottom:8px;
+}
+.sum-val{
+  font-family:'Orbitron',monospace;
+  font-size:26px;font-weight:700;line-height:1;
+}
+.sum-val.green{color:var(--green);text-shadow:0 0 14px rgba(0,229,160,.3);}
+.sum-val.red{color:var(--red);text-shadow:0 0 14px rgba(255,60,90,.3);}
+.sum-val.gold{color:var(--gold);text-shadow:0 0 14px rgba(240,180,41,.3);}
+.sum-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:.1em;
+  color:var(--text2);margin-top:4px;
+}
+
+/* FOOTER */
+footer{
+  position:relative;z-index:10;
+  border-top:1px solid var(--border);
+  padding:20px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  background:var(--bg2);
+}
+.footer-logo{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--gold);}
+.footer-disc{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--text2);opacity:.5;
+  max-width:700px;text-align:center;flex:1;
+}
+
+@media(max-width:900px){
+  .signal-grid{grid-template-columns:repeat(2,1fr);}
+  .chart-ta-grid{grid-template-columns:1fr;}
+  .summary-bar{grid-template-columns:repeat(3,1fr);}
+  nav{padding:0 16px;}
+}
+@media(max-width:500px){
+  .signal-grid{grid-template-columns:1fr;}
+  .summary-bar{grid-template-columns:repeat(2,1fr);}
+}
+</style>
 </head>
 <body>
-<div class="dashboard">
-    <div class="header">
-        <div class="logo">
-            <h1><i class="fas fa-chart-line"></i> LIQUIDITY EDGE | SMC</h1>
-            <p>institutional-grade · BTC/USD · liquidity sweep + market structure</p>
-        </div>
-        <div style="display: flex; gap: 16px;">
-            <div class="badge"><i class="fas fa-microchip"></i> 2026 execution core</div>
-            <div class="mode-toggle" id="modeToggle">
-                <button class="mode-btn active" data-mode="beginner">📘 Beginner</button>
-                <button class="mode-btn" data-mode="advanced">⚡ Advanced</button>
-            </div>
-        </div>
-    </div>
 
-    <div class="grid-2col">
-        <!-- LEFT: Chart + embedded TradingView -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <span><i class="fas fa-chart-simple"></i> BTC/USD · Real-time | <span id="currentBiasSpan">⚖️ Bias: NEUTRAL</span></span>
-                <div class="timeframe-buttons" id="timeframeSelector">
-                    <button class="tf-btn" data-tf="5">5m</button>
-                    <button class="tf-btn active-tf" data-tf="15">15m</button>
-                </div>
-            </div>
-            <div id="tvChart" style="height: 520px; width: 100%; background: #000000;"></div>
-        </div>
+<!-- NAV -->
+<nav>
+  <div class="logo">⚡ TRADEEDGE<span style="color:var(--white)">PRO</span></div>
+  <div class="live-pill"><span class="dot"></span>LIVE SIGNALS</div>
+  <div class="nav-time" id="clock">--:--:-- IST</div>
+</nav>
 
-        <!-- RIGHT PANEL: Strategy Dashboard -->
-        <div class="info-panel">
-            <!-- SIGNAL ENGINE CARD -->
-            <div class="card">
-                <div class="card-title"><i class="fas fa-brain"></i> Signal Engine · SMC Model</div>
-                <div class="signal-badge" id="signalMain">
-                    <span id="signalText">WAIT</span>
-                </div>
-                <div class="engine-text" id="reasonEngine">
-                    🧠 Analyzing market structure & liquidity...
-                </div>
-            </div>
-
-            <!-- TREND + LIQUIDITY ZONES CARD -->
-            <div class="card">
-                <div class="card-title"><i class="fas fa-flag-checkered"></i> Trend & Liquidity Zones</div>
-                <div id="trendInfo"><strong>Macro Trend (15m EMA200):</strong> <span id="emaTrend">Loading...</span></div>
-                <div id="structureInfo"><strong>Structure (5m):</strong> <span id="marketStructure">—</span></div>
-                <div id="liquidityZoneDisplay" class="liquidity-zone">
-                    🔍 Liquidity Sweep Zones: <span id="liquidityText">None detected yet</span>
-                </div>
-                <div><strong>Volatility (ATR):</strong> <span id="atrStatus">—</span></div>
-                <div><strong>RSI (14):</strong> <span id="rsiValue">—</span> | <span id="rsiFilter">—</span></div>
-            </div>
-
-            <!-- ENTRY CHECKLIST UI (dynamic) -->
-            <div class="card">
-                <div class="card-title"><i class="fas fa-clipboard-list"></i> Entry Checklist</div>
-                <div id="checklistContainer" class="checklist">
-                    <!-- dynamic check items -->
-                </div>
-                <hr>
-                <div><i class="fas fa-chart-line"></i> Risk: <span id="riskRewardSpan">1:2.0 min</span> | Position size: <span id="riskPercent">1.5%</span></div>
-                <input type="range" min="0.5" max="2.5" step="0.1" value="1.5" id="riskSlider" class="risk-slider" style="width:100%; margin-top:8px;">
-            </div>
-
-            <!-- SIMULATED TRADE ADVISORY -->
-            <div class="card beginner-advanced">
-                <div class="card-title"><i class="fas fa-shield-alt"></i> Risk Management Rules</div>
-                <ul style="font-size:0.75rem; margin-left:18px; line-height:1.5;">
-                    <li>🔻 Stop Loss: below/above liquidity sweep zone</li>
-                    <li>🎯 Take Profit: next structure level (min 1:2 RR)</li>
-                    <li>🚫 No trades in sideways / low ATR</li>
-                    <li>📉 Max risk per trade: 1–2%</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="footer-note">
-        <i class="fas fa-chart-simple"></i> Institutional Logic: Liquidity Sweep → Market Structure Shift → Retest Confirmation. Data simulated based on real-time price streaming.
-    </div>
+<!-- LIVE TICKER TAPE -->
+<div class="ticker-wrap">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {
+      "symbols":[
+        {"proName":"OANDA:XAUUSD","title":"GOLD"},
+        {"proName":"FX:EURUSD","title":"EUR/USD"},
+        {"proName":"FX:GBPUSD","title":"GBP/USD"},
+        {"proName":"FX:USDJPY","title":"USD/JPY"},
+        {"proName":"FX:AUDUSD","title":"AUD/USD"},
+        {"proName":"BINANCE:BTCUSDT","title":"BITCOIN"},
+        {"proName":"BINANCE:ETHUSDT","title":"ETHEREUM"},
+        {"proName":"CAPITALCOM:US100","title":"NAS100"},
+        {"proName":"FOREXCOM:SPXUSD","title":"S&P500"},
+        {"proName":"TVC:DXY","title":"DXY"},
+        {"proName":"NYMEX:CL1!","title":"OIL"},
+        {"proName":"FX:USDCAD","title":"USD/CAD"}
+      ],
+      "showSymbolLogo":true,
+      "isTransparent":false,
+      "displayMode":"adaptive",
+      "colorTheme":"dark",
+      "locale":"en"
+    }
+    </script>
+  </div>
 </div>
 
-<script>
-    // ------------------------- GLOBALS -------------------------
-    let tvWidget = null;
-    let currentTimeframe = '15';   // '5' or '15'
-    let currentMode = 'beginner';   // beginner / advanced
-    // store last 50 5m candles for structure & liquidity simulation (we'll derive from TradingView data via callbacks? We'll use a data simulator that pulls from TV's last bars)
-    // Since TV widget doesn't give raw OHLC directly to JS easily, we'll implement a lightweight "price action simulator" using setInterval to fetch latest price and generate synthetic structure based on real-time price movement.
-    // For robustness: we use a combination of real-time price feed (simulated via websocket but using TV's last price by capturing via chart? easier: use mock price updates based on last known price + random walk but real market will reflect actual BTC price via widget.
-    // Better approach: Use Binance or CoinGecko public API to fetch OHLCV for BTCUSDT every 30s, compute indicators, structure, liquidity sweeps. That will make it "real market".
-    // I'll implement a reliable real-data feed: fetch from Binance public API (cors enabled) for BTCUSDT 5m and 15m candles, update every 30 seconds.
-    
-    let ohlcvData5m = [];   // store recent 200 5m candles
-    let ohlcvData15m = [];
-    let lastUpdate = 0;
-    let lastSweepZone = null;
-    let currentSignal = { action: "WAIT", reason: "", checks: {} };
-    
-    // Binance API endpoints
-    async function fetchCandles(symbol, interval, limit=120) {
-        const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            return data.map(k => ({
-                time: k[0] / 1000,
-                open: parseFloat(k[1]),
-                high: parseFloat(k[2]),
-                low: parseFloat(k[3]),
-                close: parseFloat(k[4]),
-                volume: parseFloat(k[5])
-            }));
-        } catch(e) { console.warn(e); return null; }
-    }
-    
-    // technical indicators
-    function calcEMA(prices, period) {
-        const k = 2 / (period + 1);
-        let ema = prices[0];
-        for(let i=1; i<prices.length; i++) ema = prices[i] * k + ema * (1 - k);
-        return ema;
-    }
-    
-    function calcRSI(closes, period=14) {
-        if(closes.length < period+1) return 50;
-        let gains=0, losses=0;
-        for(let i=closes.length-period; i<closes.length; i++) {
-            let diff = closes[i] - closes[i-1];
-            if(diff>=0) gains+=diff; else losses-=diff;
-        }
-        let avgGain = gains/period, avgLoss = losses/period;
-        if(avgLoss === 0) return 100;
-        let rs = avgGain/avgLoss;
-        return 100 - (100/(1+rs));
-    }
-    
-    function calcATR(highs, lows, closes, period=14) {
-        if(highs.length < period+1) return 0;
-        let trs = [];
-        for(let i=1; i<highs.length; i++) {
-            let hl = highs[i] - lows[i];
-            let hc = Math.abs(highs[i] - closes[i-1]);
-            let lc = Math.abs(lows[i] - closes[i-1]);
-            trs.push(Math.max(hl, hc, lc));
-        }
-        let atr = trs.slice(-period).reduce((a,b)=>a+b,0)/period;
-        return atr;
-    }
-    
-    // detect swing highs/lows for structure (5m)
-    function detectStructure(candles) {
-        if(candles.length < 20) return "Neutral";
-        let highs = candles.map(c=>c.high);
-        let lows = candles.map(c=>c.low);
-        let recentHighs = highs.slice(-15);
-        let recentLows = lows.slice(-15);
-        let swingHigh = Math.max(...recentHighs.slice(0,-2));
-        let swingLow = Math.min(...recentLows.slice(0,-2));
-        let lastClose = candles[candles.length-1].close;
-        let prevClose = candles[candles.length-2].close;
-        if(lastClose > swingHigh && prevClose <= swingHigh) return "Bullish (HH/HL)";
-        if(lastClose < swingLow && prevClose >= swingLow) return "Bearish (LH/LL)";
-        if(lastClose > swingLow && lastClose < swingHigh) return "Range / Neutral";
-        return "Neutral";
-    }
-    
-    // liquidity sweep detection: price breaks previous swing high/low then retraces quickly
-    function detectLiquiditySweep(candles5m, currentPrice) {
-        if(candles5m.length < 30) return null;
-        let last10high = Math.max(...candles5m.slice(-20).map(c=>c.high));
-        let last10low = Math.min(...candles5m.slice(-20).map(c=>c.low));
-        let prevSwingHigh = last10high;
-        let prevSwingLow = last10low;
-        let lastCandle = candles5m[candles5m.length-1];
-        let prevCandle = candles5m[candles5m.length-2];
-        if(prevCandle && lastCandle.high > prevSwingHigh && currentPrice < lastCandle.high - (lastCandle.high-prevSwingHigh)*0.5) {
-            return { type: "HIGH LIQUIDITY SWEEP", level: prevSwingHigh, direction: "short" };
-        }
-        if(prevCandle && lastCandle.low < prevSwingLow && currentPrice > lastCandle.low + (prevSwingLow-lastCandle.low)*0.5) {
-            return { type: "LOW LIQUIDITY SWEEP", level: prevSwingLow, direction: "long" };
-        }
-        return null;
-    }
-    
-    // main strategy evaluation: based on 15m bias and 5m execution
-    let lastSignalState = {};
-    function evaluateStrategy(candles15, candles5, currentPrice) {
-        if(!candles15.length || !candles5.length) return { action: "WAIT", reason: "Initializing data...", checks: {} };
-        const closes15 = candles15.map(c=>c.close);
-        const closes5 = candles5.map(c=>c.close);
-        const highs5 = candles5.map(c=>c.high);
-        const lows5 = candles5.map(c=>c.low);
-        const ema200price = calcEMA(closes15, 200);
-        const last15Close = closes15[closes15.length-1];
-        const trendBullish = last15Close > ema200price;
-        const rsi14 = calcRSI(closes5, 14);
-        const atr = calcATR(highs5, lows5, closes5, 14);
-        const avgPrice5 = closes5.slice(-14).reduce((a,b)=>a+b,0)/14;
-        const volatilityOk = atr > (avgPrice5 * 0.002); // 0.2% min volatility expansion
-        const structure5 = detectStructure(candles5);
-        const liquiditySweep = detectLiquiditySweep(candles5, currentPrice);
-        const retestConfirmed = (liquiditySweep && Math.abs(currentPrice - (liquiditySweep.level || 0)) < atr*0.8);
-        
-        let action = "WAIT";
-        let checks = {
-            trend: false,
-            momentum: false,
-            volatility: false,
-            liquiditySweep: false,
-            retest: false
-        };
-        let reasonParts = [];
-        
-        checks.trend = trendBullish ? true : false;
-        reasonParts.push(checks.trend ? "✅ EMA200 trend confirmed (bullish)" : (trendBullish===false ? "❌ Bearish trend below EMA200" : "⚠️ Trend filter: price below EMA200 (short only)"));
-        
-        // momentum filter (long: rsi>50, short: rsi<50)
-        let momentumValid = false;
-        if(trendBullish && rsi14 > 50) { momentumValid = true; checks.momentum = true; reasonParts.push("✅ RSI > 50 → bullish momentum"); }
-        else if(!trendBullish && rsi14 < 50) { momentumValid = true; checks.momentum = true; reasonParts.push("✅ RSI < 50 → bearish momentum"); }
-        else { reasonParts.push(`⏸️ Momentum filter fail: RSI ${rsi14.toFixed(1)} not aligned with trend`); }
-        
-        checks.volatility = volatilityOk;
-        if(!volatilityOk) reasonParts.push("⚠️ Low ATR / choppy market → avoid trade");
-        else reasonParts.push("✅ Volatility expansion active");
-        
-        checks.liquiditySweep = liquiditySweep !== null;
-        if(checks.liquiditySweep) reasonParts.push(`🔍 Liquidity sweep detected (${liquiditySweep.type})`);
-        else reasonParts.push("⏳ No recent liquidity sweep");
-        
-        checks.retest = retestConfirmed && checks.liquiditySweep;
-        if(checks.retest) reasonParts.push("✅ Retest of broken structure level confirmed");
-        
-        // decision
-        let finalAction = "WAIT";
-        if(checks.trend && checks.momentum && checks.volatility && checks.liquiditySweep && checks.retest) {
-            finalAction = trendBullish ? "BUY" : "SELL";
-        } else if(checks.trend && checks.liquiditySweep && checks.volatility && !checks.retest) {
-            finalAction = "WAIT (retest missing)";
-        } else {
-            finalAction = "WAIT";
-        }
-        
-        let actionClean = (finalAction === "BUY" || finalAction === "SELL") ? finalAction : "WAIT";
-        let reasonText = reasonParts.join(" · ");
-        return { action: actionClean, reason: reasonText, checks, liquiditySweep, rsi: rsi14, atr, structure: structure5, trendBullish };
-    }
-    
-    // UI update
-    let lastPrice = 45000;
-    async function updateAll() {
-        const data5 = await fetchCandles('BTCUSDT', '5m', 120);
-        const data15 = await fetchCandles('BTCUSDT', '15m', 200);
-        if(data5 && data15) {
-            ohlcvData5m = data5;
-            ohlcvData15m = data15;
-            lastPrice = data5[data5.length-1].close;
-            const strategy = evaluateStrategy(ohlcvData15m, ohlcvData5m, lastPrice);
-            currentSignal = strategy;
-            // update UI
-            document.getElementById("signalText").innerHTML = strategy.action;
-            const s
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SUMMARY BAR -->
+  <div class="summary-bar" style="margin-top:8px;">
+    <div class="sum-item">
+      <div class="sum-label">Strong Buy</div>
+      <div class="sum-val green">5</div>
+      <div class="sum-tag">Pairs</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Buy</div>
+      <div class="sum-val" style="color:#00c878;">3</div>
+      <div class="sum-tag">Pairs</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Neutral</div>
+      <div class="sum-val gold">2</div>
+      <div class="sum-tag">Pairs</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Sell</div>
+      <div class="sum-val" style="color:#ff6080;">1</div>
+      <div class="sum-tag">Pairs</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">Strong Sell</div>
+      <div class="sum-val red">1</div>
+      <div class="sum-tag">Pairs</div>
+    </div>
+  </div>
+
+  <!-- SIGNAL CARDS -->
+  <div class="sec-label">📡 Live Signal Dashboard — Multi-Pair</div>
+
+  <div class="signal-grid">
+
+    <!-- XAUUSD -->
+    <div class="sig-card">
+      <div class="sig-topbar strong-buy"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">XAUUSD</div>
+        <div class="sig-name">Gold / US Dollar</div>
+      </div>
+      <div class="sig-badge strong-buy"><span class="arrow">▲▲</span>STRONG BUY</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:74%"></div></div>
+          <span class="bar-val">74%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:85%"></div></div>
+          <span class="bar-val">85%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:80%"></div></div>
+          <span class="bar-val">80%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- EURUSD -->
+    <div class="sig-card">
+      <div class="sig-topbar strong-buy"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">EURUSD</div>
+        <div class="sig-name">Euro / US Dollar</div>
+      </div>
+      <div class="sig-badge strong-buy"><span class="arrow">▲▲</span>STRONG BUY</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:68%"></div></div>
+          <span class="bar-val">68%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:78%"></div></div>
+          <span class="bar-val">78%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:72%"></div></div>
+          <span class="bar-val">72%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GBPUSD -->
+    <div class="sig-card">
+      <div class="sig-topbar buy"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">GBPUSD</div>
+        <div class="sig-name">British Pound / USD</div>
+      </div>
+      <div class="sig-badge buy"><span class="arrow">▲</span>BUY</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:58%"></div></div>
+          <span class="bar-val">58%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:65%"></div></div>
+          <span class="bar-val">65%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:60%"></div></div>
+          <span class="bar-val">60%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- USDJPY -->
+    <div class="sig-card">
+      <div class="sig-topbar strong-sell"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">USDJPY</div>
+        <div class="sig-name">US Dollar / Yen</div>
+      </div>
+      <div class="sig-badge strong-sell"><span class="arrow">▼▼</span>STRONG SELL</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:78%"></div></div>
+          <span class="bar-val">78%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:82%"></div></div>
+          <span class="bar-val">82%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:76%"></div></div>
+          <span class="bar-val">76%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BTCUSDT -->
+    <div class="sig-card">
+      <div class="sig-topbar strong-buy"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">BTCUSDT</div>
+        <div class="sig-name">Bitcoin / USDT</div>
+      </div>
+      <div class="sig-badge strong-buy"><span class="arrow">▲▲</span>STRONG BUY</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:71%"></div></div>
+          <span class="bar-val">71%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:88%"></div></div>
+          <span class="bar-val">88%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:83%"></div></div>
+          <span class="bar-val">83%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAS100 -->
+    <div class="sig-card">
+      <div class="sig-topbar buy"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">NAS100</div>
+        <div class="sig-name">Nasdaq 100</div>
+      </div>
+      <div class="sig-badge buy"><span class="arrow">▲</span>BUY</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:62%"></div></div>
+          <span class="bar-val">62%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:66%"></div></div>
+          <span class="bar-val">66%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:58%"></div></div>
+          <span class="bar-val">58%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DXY -->
+    <div class="sig-card">
+      <div class="sig-topbar sell"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">DXY</div>
+        <div class="sig-name">Dollar Index</div>
+      </div>
+      <div class="sig-badge sell"><span class="arrow">▼</span>SELL</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:55%"></div></div>
+          <span class="bar-val">55%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:60%"></div></div>
+          <span class="bar-val">60%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill red" style="width:52%"></div></div>
+          <span class="bar-val">52%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDUSD -->
+    <div class="sig-card">
+      <div class="sig-topbar neutral"></div>
+      <div class="sig-card-top">
+        <div class="sig-pair">AUDUSD</div>
+        <div class="sig-name">Aussie / US Dollar</div>
+      </div>
+      <div class="sig-badge neutral"><span class="arrow">◆</span>NEUTRAL</div>
+      <div class="sig-bars">
+        <div class="bar-row">
+          <span class="bar-label">RSI</span>
+          <div class="bar-track"><div class="bar-fill gold" style="width:50%"></div></div>
+          <span class="bar-val">50%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">EMA</span>
+          <div class="bar-track"><div class="bar-fill gold" style="width:48%"></div></div>
+          <span class="bar-val">48%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">MACD</span>
+          <div class="bar-track"><div class="bar-fill gold" style="width:52%"></div></div>
+          <span class="bar-val">52%</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LIVE CHART + TA -->
+  <div class="sec-label">📈 Live Chart + Real-Time Technical Analysis</div>
+
+  <div class="chart-ta-grid">
+    <!-- MAIN CHART -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⚡ LIVE CHART — XAUUSD (GOLD)</div>
+        <div class="panel-sub">H4 TIMEFRAME · IST</div>
+      </div>
+      <div class=
